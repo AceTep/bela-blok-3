@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Bela Blok</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --green: #2d8c4e;
+  --green2: #38a860;
+  --green-light: #e8f5ed;
+  --green-mid: #c3e8d0;
+  --white: #ffffff;
+  --off: #f5f7f5;
+  --border: #d8e8de;
+  --text: #1a2e22;
+  --text-mid: #5a7a65;
+  --text-dim: #9ab8a4;
+  --red: #d94040;
+  --red-light: #fdeaea;
+  --zv: #1a6faf;
+  --zv-light: #e3f0fa;
+  --caller-bg: #eaf6ee;
+  --shadow: 0 2px 12px rgba(45,140,78,.13);
+  --shadow-lg: 0 8px 32px rgba(45,140,78,.18);
+}
+
+body {
+  background: var(--off);
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+.screen { display: none; min-height: 100dvh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ═══ SETUP ═══ */
+#setup {
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+  gap: 1.75rem;
+  background: linear-gradient(160deg, #e8f5ed 0%, #f5f7f5 60%);
+  min-height: 100dvh;
+}
+
+.logo { text-align: center; }
+.logo-icon { font-size: 2.5rem; line-height: 1; margin-bottom: .3rem; }
+.logo-name {
+  font-size: 2.8rem;
+  font-weight: 900;
+  color: var(--text);
+  letter-spacing: -.03em;
+  line-height: 1;
+}
+.logo-name span { color: var(--green); }
+.logo-sub { font-size: .72rem; font-weight: 700; letter-spacing: .2em; color: var(--text-dim); text-transform: uppercase; margin-top: .3rem; }
+
+.setup-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--white);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.3rem;
+}
+
+.section-label {
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .2em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: .5rem;
+}
+
+.player-list { display: flex; flex-direction: column; gap: .5rem; }
+.player-row { display: flex; align-items: center; gap: .6rem; }
+.p-badge {
+  width: 2rem; height: 2rem;
+  border-radius: 10px;
+  background: var(--green-light);
+  color: var(--green);
+  font-size: .85rem;
+  font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+input[type="text"] {
+  flex: 1;
+  background: var(--off);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  font-size: .95rem;
+  font-weight: 600;
+  padding: .6rem .9rem;
+  outline: none;
+  transition: border-color .15s, background .15s;
+}
+input[type="text"]:focus { border-color: var(--green); background: var(--white); }
+input::placeholder { color: var(--text-dim); font-weight: 500; }
+
+.limit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
+.limit-btn {
+  padding: .75rem .25rem;
+  background: var(--off);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-mid);
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: all .12s;
+}
+.limit-btn.on {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+.limit-btn:active { transform: scale(.96); }
+
+.btn-start {
+  width: 100%;
+  padding: .95rem;
+  background: var(--green);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: .03em;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+  box-shadow: 0 4px 16px rgba(45,140,78,.3);
+}
+.btn-start:active { background: var(--green2); transform: scale(.98); }
+
+/* ═══ GAME ═══ */
+#game { background: var(--off); }
+
+.top-bar {
+  background: var(--white);
+  border-bottom: 1.5px solid var(--border);
+  padding: .7rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 10;
+  box-shadow: 0 1px 8px rgba(0,0,0,.06);
+}
+.top-bar-logo { font-size: 1.1rem; font-weight: 900; color: var(--text); letter-spacing: -.02em; }
+.top-bar-logo span { color: var(--green); }
+.top-actions { display: flex; gap: .4rem; }
+.btn-sm {
+  padding: .38rem .75rem;
+  background: var(--off);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-mid);
+  font-family: 'Nunito', sans-serif;
+  font-size: .78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .12s;
+}
+.btn-sm:hover { border-color: var(--green); color: var(--green); }
+.btn-sm:active { transform: scale(.96); }
+
+/* Scoreboard */
+.scoreboard {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: var(--white);
+  border-bottom: 1.5px solid var(--border);
+  position: sticky; top: 49px; z-index: 9;
+}
+.sc-col {
+  padding: .9rem .5rem .75rem;
+  text-align: center;
+  border-right: 1.5px solid var(--border);
+  transition: background .2s;
+  position: relative;
+}
+.sc-col:last-child { border-right: none; }
+.sc-col.caller {
+  background: var(--caller-bg);
+}
+.sc-col.caller::after {
+  content: '';
+  position: absolute;
+  bottom: -1.5px; left: 0; right: 0;
+  height: 3px;
+  background: var(--green);
+  border-radius: 2px 2px 0 0;
+}
+.sc-player-name {
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--text-mid);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sc-col.caller .sc-player-name { color: var(--green); }
+.sc-zove-badge {
+  height: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: .15rem 0;
+}
+.zove-tag {
+  font-size: .58rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  background: var(--green);
+  color: #fff;
+  border-radius: 5px;
+  padding: 1px 6px;
+}
+.sc-score {
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -.03em;
+}
+.sc-col.caller .sc-score { color: var(--green); }
+
+/* Rounds */
+.rounds-area {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 5rem;
+}
+
+.no-rounds {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  gap: .5rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+.no-rounds-icon { font-size: 2.5rem; opacity: .4; }
+.no-rounds p { font-size: .9rem; font-weight: 600; }
+
+.rounds-head {
+  display: grid;
+  grid-template-columns: 2.2rem repeat(3, 1fr) 2.6rem;
+  padding: .4rem 0;
+  background: var(--green-light);
+  border-bottom: 1.5px solid var(--green-mid);
+}
+.rh { text-align: center; font-size: .6rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--green); }
+
+.round-row {
+  display: grid;
+  grid-template-columns: 2.2rem repeat(3, 1fr) 2.6rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--white);
+  transition: background .1s;
+}
+.round-row:nth-child(even) { background: #fafcfa; }
+.r-edit-btn {
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-dim);
+  font-size: 1rem;
+  padding: 0 .3rem;
+  transition: color .12s;
+}
+.r-edit-btn:hover { color: var(--green); }
+.r-num { text-align: center; font-size: .68rem; font-weight: 700; color: var(--text-dim); padding: .75rem 0; display: flex; align-items: center; justify-content: center; }
+.r-cell {
+  text-align: center;
+  padding: .7rem .25rem;
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--text-mid);
+}
+.r-cell.is-caller { color: var(--green); font-weight: 800; }
+.r-cell.is-fail { color: var(--red); font-weight: 800; }
+.r-bonus { display: block; font-size: .62rem; font-weight: 700; color: var(--zv); }
+
+/* FAB */
+.fab {
+  position: fixed;
+  bottom: 1.5rem; right: 1.5rem;
+  width: 58px; height: 58px;
+  border-radius: 18px;
+  background: var(--green);
+  color: #fff;
+  border: none;
+  font-size: 2rem;
+  font-weight: 300;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(45,140,78,.4);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .15s, background .15s;
+  z-index: 20;
+}
+.fab:active { transform: scale(.9); background: var(--green2); }
+
+/* ═══ MODAL ═══ */
+.overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 100;
+  align-items: flex-end;
+  justify-content: center;
+}
+.overlay.open { display: flex; }
+
+.sheet {
+  background: var(--white);
+  border-radius: 22px 22px 0 0;
+  width: 100%;
+  max-width: 500px;
+  padding: 1rem 1.25rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  animation: up .2s ease;
+  max-height: 93dvh;
+  overflow-y: auto;
+}
+@keyframes up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto -.2rem; }
+.sheet-title { font-size: 1.3rem; font-weight: 900; color: var(--text); }
+.sheet-sub { font-size: .8rem; font-weight: 600; color: var(--text-dim); margin-top: .15rem; }
+
+/* Caller */
+.caller-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: .45rem; }
+.cpill {
+  padding: .65rem .3rem;
+  background: var(--off);
+  border: 1.5px solid var(--border);
+  border-radius: 11px;
+  color: var(--text-mid);
+  font-family: 'Nunito', sans-serif;
+  font-size: .88rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: all .12s;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cpill.on {
+  background: var(--green-light);
+  border-color: var(--green);
+  color: var(--green);
+}
+
+/* Score inputs */
+.score-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: .45rem; }
+.sinput-wrap { display: flex; flex-direction: column; gap: .25rem; }
+.sinput-name { font-size: .65rem; font-weight: 700; text-align: center; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sinput-wrap input {
+  width: 100%;
+  background: var(--off);
+  border: 1.5px solid var(--border);
+  border-radius: 11px;
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  padding: .65rem .2rem;
+  text-align: center;
+  outline: none;
+  -webkit-appearance: none;
+  transition: border-color .15s;
+}
+.sinput-wrap input:focus { border-color: var(--green); }
+.sinput-wrap.caller input { border-color: var(--green); color: var(--green); background: var(--green-light); }
+
+.total-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--off);
+  border: 1.5px solid var(--border);
+  border-radius: 11px;
+  padding: .6rem 1rem;
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--text-mid);
+}
+.tval { font-size: 1.1rem; font-weight: 900; color: var(--text); }
+.tval.ok { color: var(--green); }
+.tval.over { color: var(--red); }
+
+/* Zvanje */
+.zv-section { display: flex; flex-direction: column; gap: .55rem; }
+.zv-step { font-size: .65rem; font-weight: 700; color: var(--text-dim); margin-bottom: .3rem; }
+.zv-vals { display: flex; gap: .35rem; }
+.zv-vbtn {
+  flex: 1;
+  padding: .55rem .15rem;
+  background: var(--off);
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  color: var(--text-mid);
+  font-family: 'Nunito', sans-serif;
+  font-size: .82rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: all .12s;
+}
+.zv-vbtn.on {
+  background: var(--zv-light);
+  border-color: var(--zv);
+  color: var(--zv);
+}
+.zv-players { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem; }
+.zv-pbtn {
+  padding: .55rem .25rem;
+  background: var(--off);
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  color: var(--text-mid);
+  font-family: 'Nunito', sans-serif;
+  font-size: .8rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: all .12s;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.zv-pbtn:disabled { opacity: .25; cursor: default; }
+.zv-chips { display: flex; flex-wrap: wrap; gap: .3rem; min-height: 1.6rem; align-items: center; }
+.zv-chip {
+  display: flex; align-items: center; gap: .2rem;
+  background: var(--zv-light);
+  border: 1px solid #b8d8f0;
+  border-radius: 20px;
+  padding: .2rem .55rem .2rem .45rem;
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--zv);
+}
+.zv-chip button { background: none; border: none; color: var(--zv); cursor: pointer; font-size: .9rem; padding: 0; opacity: .6; line-height: 1; }
+.zv-chip button:hover { opacity: 1; }
+.zv-none { font-size: .72rem; font-weight: 600; color: var(--text-dim); }
+
+.sheet-error {
+  background: var(--red-light);
+  border: 1.5px solid #f0b0b0;
+  border-radius: 10px;
+  padding: .6rem .9rem;
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--red);
+  display: none;
+}
+.sheet-error.show { display: block; }
+
+.sheet-btns { display: flex; gap: .6rem; }
+.btn-cancel {
+  flex: 1; padding: .85rem;
+  background: var(--off);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  color: var(--text-mid);
+  font-family: 'Nunito', sans-serif;
+  font-size: .92rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-save {
+  flex: 2; padding: .85rem;
+  background: var(--green);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Nunito', sans-serif;
+  font-size: .92rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(45,140,78,.3);
+  transition: background .12s, transform .1s;
+}
+.btn-save:active { background: var(--green2); transform: scale(.98); }
+
+/* ═══ WINNER ═══ */
+#winner {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem 1.5rem;
+  gap: 1.5rem;
+  background: linear-gradient(160deg, #d4ede0 0%, #f5f7f5 60%);
+}
+.win-trophy { font-size: 5rem; line-height: 1; }
+.win-tag { font-size: .65rem; font-weight: 800; letter-spacing: .25em; color: var(--text-dim); text-transform: uppercase; }
+.win-name { font-size: 3rem; font-weight: 900; color: var(--green); letter-spacing: -.03em; line-height: 1.1; }
+.win-pts { font-size: 1rem; font-weight: 600; color: var(--text-mid); }
+.win-pts strong { color: var(--green); }
+.win-card {
+  background: var(--white);
+  border-radius: 18px;
+  box-shadow: var(--shadow-lg);
+  padding: 1.25rem 1.5rem;
+  width: 100%;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: .7rem;
+}
+.stand-row { display: flex; justify-content: space-between; align-items: center; }
+.sname { font-size: .92rem; font-weight: 600; color: var(--text-mid); }
+.stand-row.first .sname { color: var(--text); font-weight: 800; }
+.sscore { font-size: 1.1rem; font-weight: 900; color: var(--green); }
+
+/* ═══ CONFIRM ═══ */
+.confirm-bg {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.45); z-index: 200;
+  align-items: center; justify-content: center; padding: 1.5rem;
+}
+.confirm-bg.open { display: flex; }
+.confirm-box {
+  background: var(--white);
+  border-radius: 18px;
+  padding: 1.5rem;
+  width: 100%; max-width: 280px;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  display: flex; flex-direction: column; gap: 1rem;
+}
+.confirm-box h3 { font-size: 1.15rem; font-weight: 900; }
+.confirm-box p { font-size: .85rem; font-weight: 600; color: var(--text-mid); }
+.confirm-btns { display: flex; gap: .6rem; }
+.btn-danger {
+  flex: 1; padding: .8rem;
+  background: var(--red); color: #fff;
+  border: none; border-radius: 10px;
+  font-family: 'Nunito', sans-serif; font-size: .9rem; font-weight: 800;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<!-- ══ SETUP ══ -->
+<div id="setup" class="screen active">
+  <div class="logo">
+    <div class="logo-icon">♠️♥️</div>
+    <div class="logo-name">Bela<span>Blok</span></div>
+    <div class="logo-sub">3 igrača</div>
+  </div>
+
+  <div class="setup-card">
+    <div>
+      <div class="section-label">Igrači</div>
+      <div class="player-list">
+        <div class="player-row"><div class="p-badge">1</div><input type="text" id="p1" placeholder="Ime igrača 1" maxlength="13"></div>
+        <div class="player-row"><div class="p-badge">2</div><input type="text" id="p2" placeholder="Ime igrača 2" maxlength="13"></div>
+        <div class="player-row"><div class="p-badge">3</div><input type="text" id="p3" placeholder="Ime igrača 3" maxlength="13"></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">Limit bodova</div>
+      <div class="limit-grid">
+        <button class="limit-btn" onclick="setLimit(501,this)">501</button>
+        <button class="limit-btn" onclick="setLimit(701,this)">701</button>
+        <button class="limit-btn on" onclick="setLimit(1001,this)">1001</button>
+      </div>
+    </div>
+    <button class="btn-start" onclick="startGame()">Započni igru →</button>
+  </div>
+</div>
+
+<!-- ══ GAME ══ -->
+<div id="game" class="screen">
+  <div class="top-bar">
+    <div class="top-bar-logo">Bela<span>Blok</span></div>
+    <div class="top-actions">
+      <button class="btn-sm" onclick="undoLast()">↩ Poništi</button>
+      <button class="btn-sm" onclick="askReset()">Nova igra</button>
+    </div>
+  </div>
+
+  <div class="scoreboard">
+    <div class="sc-col" id="sc0">
+      <div class="sc-player-name" id="scn0">—</div>
+      <div class="sc-zove-badge" id="scb0"></div>
+      <div class="sc-score" id="sct0">0</div>
+    </div>
+    <div class="sc-col" id="sc1">
+      <div class="sc-player-name" id="scn1">—</div>
+      <div class="sc-zove-badge" id="scb1"></div>
+      <div class="sc-score" id="sct1">0</div>
+    </div>
+    <div class="sc-col" id="sc2">
+      <div class="sc-player-name" id="scn2">—</div>
+      <div class="sc-zove-badge" id="scb2"></div>
+      <div class="sc-score" id="sct2">0</div>
+    </div>
+  </div>
+
+  <div class="rounds-area" id="roundsArea">
+    <div class="no-rounds">
+      <div class="no-rounds-icon">🃏</div>
+      <p>Nema rundi još.<br>Pritisni + za prvu rundu.</p>
+    </div>
+  </div>
+
+  <button class="fab" onclick="openSheet()">+</button>
+</div>
+
+<!-- ══ WINNER ══ -->
+<div id="winner" class="screen">
+  <div class="win-trophy">🏆</div>
+  <div>
+    <div class="win-tag">Pobjednik</div>
+    <div class="win-name" id="winName">—</div>
+    <div class="win-pts">Ukupno: <strong id="winScore">0</strong> bodova</div>
+  </div>
+  <div class="win-card" id="winCard"></div>
+  <button class="btn-start" style="max-width:280px;width:100%;" onclick="hardReset()">Nova igra</button>
+</div>
+
+<!-- ══ MODAL SHEET ══ -->
+<div class="overlay" id="overlay" onclick="bgClose(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+
+    <div>
+      <div class="sheet-title" id="shTitle">Nova runda</div>
+      <div class="sheet-sub" id="shSub"></div>
+    </div>
+
+    <div>
+      <div class="section-label">Tko zove?</div>
+      <div class="caller-row" id="callerRow"></div>
+    </div>
+
+    <div>
+      <div class="section-label">Bodovi <span style="color:var(--text-dim);font-size:.8em;letter-spacing:0;text-transform:none;font-weight:600;">(zbroj = 162)</span></div>
+      <div class="score-row" id="scoreRow"></div>
+    </div>
+
+    <div class="total-pill">
+      <span>Zbroj</span>
+      <span class="tval" id="tval">0</span>
+    </div>
+
+    <div class="zv-section">
+      <div class="section-label">Zvanje <span style="color:var(--text-dim);font-size:.8em;letter-spacing:0;text-transform:none;font-weight:600;">(neobavezno)</span></div>
+      <div>
+        <div class="zv-step">1. Odaberi vrijednost zvanja</div>
+        <div class="zv-vals" id="zvVals"></div>
+      </div>
+      <div>
+        <div class="zv-step">2. Odaberi igrača</div>
+        <div class="zv-players" id="zvPlayers"></div>
+      </div>
+      <div class="zv-chips" id="zvChips"></div>
+    </div>
+
+    <div class="sheet-error" id="shErr"></div>
+
+    <div class="sheet-btns">
+      <button class="btn-cancel" onclick="closeSheet()">Odustani</button>
+      <button class="btn-save" onclick="saveRound()"><span id="saveBtnLabel">Spremi rundu</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONFIRM ══ -->
+<div class="confirm-bg" id="confirmBg">
+  <div class="confirm-box">
+    <h3>Nova igra?</h3>
+    <p>Svi bodovi bit će obrisani.</p>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeConfirm()">Odustani</button>
+      <button class="btn-danger" onclick="hardReset()">Resetiraj</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let players = ['','',''];
+let totals   = [0,0,0];
+let rounds   = [];
+let caller   = 0;
+let limit    = 1001;
+let _lim     = 1001;
+
+// Modal state
+let mCaller   = 0;
+let zvItems   = [];
+let zvSelVal  = null;
+let mEditIdx  = -1; // -1 = new round, >= 0 = editing
+
+const ZV = [20, 50, 100, 150, 200];
+
+// ── SETUP ──
+function setLimit(v, btn) {
+  _lim = v;
+  document.querySelectorAll('.limit-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+function startGame() {
+  players = [
+    document.getElementById('p1').value.trim() || 'Igrač 1',
+    document.getElementById('p2').value.trim() || 'Igrač 2',
+    document.getElementById('p3').value.trim() || 'Igrač 3',
+  ];
+  totals = [0,0,0]; rounds = []; caller = 0; limit = _lim;
+  show('game');
+  renderBoard();
+  renderRounds();
+}
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── SCOREBOARD ──
+function renderBoard() {
+  for (let i = 0; i < 3; i++) {
+    document.getElementById('scn'+i).textContent = players[i];
+    document.getElementById('sct'+i).textContent = totals[i];
+    const col = document.getElementById('sc'+i);
+    const badge = document.getElementById('scb'+i);
+    if (i === caller) {
+      col.classList.add('caller');
+      badge.innerHTML = '<span class="zove-tag">ZOVE</span>';
+    } else {
+      col.classList.remove('caller');
+      badge.innerHTML = '';
+    }
+  }
+}
+
+// ── ROUNDS ──
+function renderRounds() {
+  const area = document.getElementById('roundsArea');
+  if (!rounds.length) {
+    area.innerHTML = `<div class="no-rounds"><div class="no-rounds-icon">🃏</div><p>Nema rundi još.<br>Pritisni + za prvu rundu.</p></div>`;
+    return;
+  }
+  let h = `<div class="rounds-head"><div class="rh">#</div>${players.map(p=>`<div class="rh">${p}</div>`).join('')}<div class="rh"></div></div>`;
+  rounds.forEach((r, i) => {
+    h += `<div class="round-row"><div class="r-num">${i+1}</div>`;
+    for (let j = 0; j < 3; j++) {
+      const zs = (r.zv[j]||[]).reduce((a,b)=>a+b,0);
+      let cls = 'r-cell';
+      if (j === r.ci) cls += r.scores[j] === 0 ? ' is-fail' : ' is-caller';
+      h += `<div class="${cls}">${r.scores[j]}${zs>0?`<span class="r-bonus">+${zs}</span>`:''}</div>`;
+    }
+    h += `<button class="r-edit-btn" onclick="openEdit(${i})">✏️</button>`;
+    h += `</div>`;
+  });
+  area.innerHTML = h;
+  area.scrollTop = area.scrollHeight;
+}
+
+// ── SHEET ──
+function openSheet() {
+  mEditIdx = -1;
+  mCaller = caller; zvItems = []; zvSelVal = null;
+  buildSheet();
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('shErr').classList.remove('show');
+}
+
+function openEdit(idx) {
+  mEditIdx = idx;
+  const r = rounds[idx];
+  mCaller = r.ci;
+  // Restore zvanje items
+  zvItems = [];
+  r.zv.forEach((arr, pi) => arr.forEach(v => zvItems.push({pi, v})));
+  zvSelVal = null;
+  buildSheet(r);
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('shErr').classList.remove('show');
+}
+function closeSheet() { document.getElementById('overlay').classList.remove('open'); }
+function bgClose(e) { if (e.target === document.getElementById('overlay')) closeSheet(); }
+
+function buildSheet(existingRound) {
+  const isEdit = mEditIdx >= 0;
+  document.getElementById('shTitle').textContent = isEdit ? `Uredi rundu ${mEditIdx+1}` : `Runda ${rounds.length+1}`;
+  document.getElementById('shSub').textContent = isEdit ? `Uređivanje` : `Na redu: ${players[mCaller]}`;
+  document.getElementById('saveBtnLabel').textContent = isEdit ? 'Spremi izmjene' : 'Spremi rundu';
+
+  // Caller pills
+  const cr = document.getElementById('callerRow');
+  cr.innerHTML = '';
+  players.forEach((p,i) => {
+    const b = document.createElement('button');
+    b.className = 'cpill' + (i===mCaller?' on':'');
+    b.textContent = p;
+    b.onclick = () => {
+      mCaller = i;
+      cr.querySelectorAll('.cpill').forEach((x,j) => x.classList.toggle('on', j===i));
+      document.getElementById('shSub').textContent = `Na redu: ${players[i]}`;
+      refreshCallerStyle(); updateTotal();
+    };
+    cr.appendChild(b);
+  });
+
+  buildScores();
+  buildZv();
+  updateTotal();
+}
+
+function buildScores() {
+  const row = document.getElementById('scoreRow');
+  row.innerHTML = '';
+  const isEdit = mEditIdx >= 0;
+  // When editing, show original raw scores (before 0-override) if stored, else show current
+  const prefill = isEdit ? rounds[mEditIdx]._raw || rounds[mEditIdx].scores : [null,null,null];
+  for (let i=0;i<3;i++) {
+    const w = document.createElement('div');
+    w.className = 'sinput-wrap' + (i===mCaller?' caller':'');
+    w.id = 'sw'+i;
+    const val = prefill[i] !== null ? prefill[i] : '';
+    w.innerHTML = `<div class="sinput-name">${players[i]}</div><input type="number" id="si${i}" min="0" max="162" placeholder="0" inputmode="numeric" value="${val}" oninput="onInput(${i})">`;
+    row.appendChild(w);
+  }
+}
+
+function refreshCallerStyle() {
+  for (let i=0;i<3;i++) document.getElementById('sw'+i).className='sinput-wrap'+(i===mCaller?' caller':'');
+}
+
+function onInput(c) {
+  updateTotal();
+  const v = [0,1,2].map(i=>{ const x=document.getElementById('si'+i).value; return x===''?null:parseInt(x); });
+  if (v.filter(x=>x!==null).length===2) {
+    const m = v.findIndex(x=>x===null);
+    const s = v.filter(x=>x!==null).reduce((a,b)=>a+b,0);
+    const r = 162-s;
+    if (r>=0) { document.getElementById('si'+m).value=r; updateTotal(); }
+  }
+}
+
+function updateTotal() {
+  const s = [0,1,2].map(i=>{ const x=document.getElementById('si'+i).value; return x===''?0:parseInt(x)||0; }).reduce((a,b)=>a+b,0);
+  const el = document.getElementById('tval');
+  el.textContent = s;
+  el.className = 'tval' + (s===162?' ok':s>162?' over':'');
+}
+
+// ── ZVANJE ──
+function buildZv() {
+  const vc = document.getElementById('zvVals');
+  vc.innerHTML = '';
+  ZV.forEach(v => {
+    const b = document.createElement('button');
+    b.className = 'zv-vbtn';
+    b.textContent = '+'+v;
+    b.onclick = () => {
+      zvSelVal = (zvSelVal===v)?null:v;
+      vc.querySelectorAll('.zv-vbtn').forEach(x=>x.classList.remove('on'));
+      if (zvSelVal!==null) b.classList.add('on');
+      renderZvPlayers();
+    };
+    vc.appendChild(b);
+  });
+  renderZvPlayers();
+  renderZvChips();
+}
+
+function renderZvPlayers() {
+  const pc = document.getElementById('zvPlayers');
+  pc.innerHTML = '';
+  players.forEach((p,i) => {
+    const b = document.createElement('button');
+    b.className = 'zv-pbtn';
+    b.textContent = p;
+    if (!zvSelVal) { b.disabled = true; }
+    else { b.onclick = () => { zvItems.push({pi:i, v:zvSelVal}); renderZvChips(); }; }
+    pc.appendChild(b);
+  });
+}
+
+function removeZv(idx) { zvItems.splice(idx,1); renderZvChips(); }
+
+function renderZvChips() {
+  const c = document.getElementById('zvChips');
+  if (!zvItems.length) { c.innerHTML='<span class="zv-none">Nema zvanja</span>'; return; }
+  c.innerHTML='';
+  zvItems.forEach((item,idx) => {
+    const ch = document.createElement('div');
+    ch.className='zv-chip';
+    ch.innerHTML=`${players[item.pi]} <strong>+${item.v}</strong><button onclick="removeZv(${idx})">×</button>`;
+    c.appendChild(ch);
+  });
+}
+
+// ── SAVE ──
+function saveRound() {
+  const err = document.getElementById('shErr');
+  err.classList.remove('show');
+
+  const raw = [0,1,2].map(i=>{ const x=document.getElementById('si'+i).value; return x===''?null:parseInt(x); });
+  if (raw.some(x=>x===null)) { err.textContent='Upiši bodove za svakog igrača!'; err.classList.add('show'); return; }
+  const sum = raw.reduce((a,b)=>a+b,0);
+  if (sum!==162) { err.textContent=`Zbroj mora biti 162 (trenutno: ${sum}).`; err.classList.add('show'); return; }
+
+  let scores = [...raw];
+
+  // Build zvanje arrays first
+  const zv = [[],[],[]];
+  zvItems.forEach(x => zv[x.pi].push(x.v));
+  const zvTotals = [0,1,2].map(i => zv[i].reduce((a,b)=>a+b,0));
+
+  // Pass/fail: compare caller total (bodovi+zvanja) vs each opponent total
+  const callerTotal = scores[mCaller] + zvTotals[mCaller];
+  const opponents = [0,1,2].filter(i => i !== mCaller);
+  const oppTotals = opponents.map(i => scores[i] + zvTotals[i]);
+
+  // Caller fails if either opponent beats them, or if combined opponents >= caller
+  const callerFails = oppTotals.some(t => t >= callerTotal) || callerTotal <= 81;
+
+  if (callerFails) {
+    // Find which opponent has more points (bodovi only, zvanja stay separate)
+    const [oppA, oppB] = opponents;
+    const winner = (scores[oppA] + zvTotals[oppA]) >= (scores[oppB] + zvTotals[oppB]) ? oppA : oppB;
+    scores[winner] += scores[mCaller]; // caller's raw points go to winning opponent
+    scores[mCaller] = 0;
+  }
+
+  if (mEditIdx >= 0) {
+    // Remove old round's contribution from totals
+    const old = rounds[mEditIdx];
+    for (let i=0;i<3;i++) totals[i] -= old.scores[i] + (old.zv[i]||[]).reduce((a,b)=>a+b,0);
+    // Replace round
+    rounds[mEditIdx] = {ci:mCaller, scores, zv, _raw:[...raw]};
+    // Add new contribution
+    for (let i=0;i<3;i++) totals[i] += scores[i] + zv[i].reduce((a,b)=>a+b,0);
+  } else {
+    rounds.push({ci:mCaller, scores, zv, _raw:[...raw]});
+    for (let i=0;i<3;i++) totals[i] += scores[i] + zv[i].reduce((a,b)=>a+b,0);
+    caller = (caller+1)%3;
+  }
+
+  closeSheet();
+  renderBoard();
+  renderRounds();
+  checkWinner();
+}
+
+// ── UNDO ──
+function undoLast() {
+  if (!rounds.length) return;
+  const last = rounds.pop();
+  for (let i=0;i<3;i++) totals[i] -= last.scores[i] + (last.zv[i]||[]).reduce((a,b)=>a+b,0);
+  caller = (caller+2)%3;
+  renderBoard(); renderRounds();
+}
+
+// ── WINNER ──
+function checkWinner() {
+  const max = Math.max(...totals);
+  if (max < limit) return;
+  const wi = totals.indexOf(max);
+  document.getElementById('winName').textContent = players[wi];
+  document.getElementById('winScore').textContent = totals[wi];
+  const sorted = [0,1,2].sort((a,b)=>totals[b]-totals[a]);
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById('winCard').innerHTML = sorted.map((pi,r)=>
+    `<div class="stand-row${r===0?' first':''}"><span class="sname">${medals[r]} ${players[pi]}</span><span class="sscore">${totals[pi]}</span></div>`
+  ).join('');
+  show('winner');
+}
+
+// ── RESET ──
+function askReset() { document.getElementById('confirmBg').classList.add('open'); }
+function closeConfirm() { document.getElementById('confirmBg').classList.remove('open'); }
+function hardReset() {
+  closeConfirm();
+  ['p1','p2','p3'].forEach(id=>document.getElementById(id).value='');
+  show('setup');
+}
+</script>
+</body>
+</html>
