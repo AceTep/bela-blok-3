@@ -532,6 +532,17 @@ input::placeholder { color: var(--text-dim); font-weight: 500; }
 .sscore { font-size: 1.1rem; font-weight: 900; color: var(--green); }
 
 /* ═══ CONFIRM ═══ */
+#coin [style*="backface-visibility"] { -webkit-backface-visibility: hidden; }
+.lb-row { display:grid; grid-template-columns:2rem 1fr repeat(3,auto); gap:.4rem .6rem; align-items:center; padding:.6rem .75rem; border-radius:11px; margin-bottom:.3rem; background:var(--off); }
+.lb-row.lb-first { background:linear-gradient(135deg,#fff8e0,#fff3c0); border:1.5px solid #f5c842; }
+.lb-rank { font-size:.9rem; text-align:center; }
+.lb-name { font-size:.92rem; font-weight:800; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.lb-stat { text-align:center; }
+.lb-stat-val { font-size:.95rem; font-weight:900; color:var(--green); }
+.lb-stat-lbl { font-size:.55rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:.08em; }
+.lb-head { display:grid; grid-template-columns:2rem 1fr repeat(3,auto); gap:.4rem .6rem; padding:.2rem .75rem .4rem; }
+.lb-head-lbl { font-size:.55rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); text-align:center; }
+
 .confirm-bg {
   display: none; position: fixed; inset: 0;
   background: rgba(0,0,0,.45); z-index: 200;
@@ -596,6 +607,8 @@ input::placeholder { color: var(--text-dim); font-weight: 500; }
     <div class="top-bar-logo">Bela<span>Blok</span></div>
     <div class="top-actions">
       <button class="btn-sm" onclick="undoLast()">↩ Poništi</button>
+      <button class="btn-sm" onclick="openLeaderboard()" style="font-weight:900;padding:.38rem .55rem;">🏆</button>
+      <button class="btn-sm" onclick="openHelp()" style="font-weight:900;padding:.38rem .6rem;">?</button>
       <button class="btn-sm" onclick="askReset()">Nova igra</button>
     </div>
   </div>
@@ -637,7 +650,10 @@ input::placeholder { color: var(--text-dim); font-weight: 500; }
     <div class="win-pts">Ukupno: <strong id="winScore">0</strong> bodova</div>
   </div>
   <div class="win-card" id="winCard"></div>
-  <button class="btn-start" style="max-width:280px;width:100%;" onclick="hardReset()">Nova igra</button>
+  <div style="display:flex;flex-direction:column;gap:.6rem;width:100%;max-width:280px;">
+    <button class="btn-start" onclick="rematch()">Ponovi igru (ista imena) →</button>
+    <button class="btn-start" style="background:var(--text-mid);box-shadow:none;" onclick="hardReset()">Nova igra</button>
+  </div>
 </div>
 
 <!-- ══ MODAL SHEET ══ -->
@@ -687,6 +703,105 @@ input::placeholder { color: var(--text-dim); font-weight: 500; }
   </div>
 </div>
 
+<!-- ══ LEADERBOARD ══ -->
+<div class="confirm-bg" id="lbBg" onclick="closeLb(event)">
+  <div style="background:var(--white);border-radius:22px 22px 0 0;width:100%;max-width:500px;padding:1.25rem 1.25rem 2.5rem;display:flex;flex-direction:column;gap:1rem;max-height:88dvh;overflow-y:auto;animation:up .2s ease;">
+    <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto -.2rem;"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:1.3rem;font-weight:900;">Ljestvica 🏆</div>
+      <button onclick="closeLb()" style="background:var(--off);border:1.5px solid var(--border);border-radius:8px;width:2rem;height:2rem;font-size:1rem;cursor:pointer;color:var(--text-mid);display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+    <div id="lbContent"></div>
+    <button onclick="confirmClearLb()" style="background:none;border:none;color:var(--text-dim);font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer;text-decoration:underline;text-align:center;margin-top:-.3rem;">Obriši sve rezultate</button>
+  </div>
+</div>
+
+<!-- ══ HELP ══ -->
+<div class="confirm-bg" id="helpBg" onclick="closeHelp(event)">
+  <div style="background:var(--white);border-radius:22px 22px 0 0;width:100%;max-width:500px;padding:1.25rem 1.25rem 2.5rem;display:flex;flex-direction:column;gap:1.1rem;max-height:88dvh;overflow-y:auto;animation:up .2s ease;">
+    <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto -.2rem;"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:1.3rem;font-weight:900;">Kako se igra 🃏</div>
+      <button onclick="closeHelp()" style="background:var(--off);border:1.5px solid var(--border);border-radius:8px;width:2rem;height:2rem;font-size:1rem;cursor:pointer;color:var(--text-mid);display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:.9rem;">
+
+      <div style="background:var(--green-light);border-radius:14px;padding:1rem;">
+        <div style="font-size:.6rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--green);margin-bottom:.4rem;">🎯 Cilj igre</div>
+        <div style="font-size:.88rem;font-weight:600;color:var(--text);line-height:1.5;">Prvi igrač koji dostigne odabrani limit bodova (501 / 701 / 1001) pobjeđuje.</div>
+      </div>
+
+      <div style="background:var(--off);border-radius:14px;padding:1rem;">
+        <div style="font-size:.6rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--text-mid);margin-bottom:.5rem;">🔄 Tijek igre</div>
+        <div style="display:flex;flex-direction:column;gap:.45rem;">
+          <div style="display:flex;gap:.6rem;align-items:flex-start;font-size:.85rem;font-weight:600;color:var(--text);line-height:1.4;"><span style="color:var(--green);font-weight:900;flex-shrink:0;">1.</span>Igrači se rotiraju tko je <strong>zvač</strong> (označen zelenom bojom).</div>
+          <div style="display:flex;gap:.6rem;align-items:flex-start;font-size:.85rem;font-weight:600;color:var(--text);line-height:1.4;"><span style="color:var(--green);font-weight:900;flex-shrink:0;">2.</span>Nakon odigrane ruke upisuju se bodovi — zbroj uvijek mora biti <strong>162</strong>.</div>
+          <div style="display:flex;gap:.6rem;align-items:flex-start;font-size:.85rem;font-weight:600;color:var(--text);line-height:1.4;"><span style="color:var(--green);font-weight:900;flex-shrink:0;">3.</span>Provjeri prolazi li zvač, pa se bodovi zbrajaju na ukupni rezultat.</div>
+        </div>
+      </div>
+
+      <div style="background:var(--off);border-radius:14px;padding:1rem;">
+        <div style="font-size:.6rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--text-mid);margin-bottom:.5rem;">✅ Kad zvač prolazi</div>
+        <div style="font-size:.85rem;font-weight:600;color:var(--text);line-height:1.5;">Zvač prolazi ako mu je zbroj <strong>bodovi + zvanja</strong> strogo veći od svakog protivnika posebno. Svi igrači zadržavaju svoje bodove + zvanja.</div>
+      </div>
+
+      <div style="background:var(--red-light);border:1.5px solid #f0b0b0;border-radius:14px;padding:1rem;">
+        <div style="font-size:.6rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--red);margin-bottom:.5rem;">❌ Kad zvač pada</div>
+        <div style="font-size:.85rem;font-weight:600;color:var(--text);line-height:1.5;">Zvač dobiva <strong>0 bodova</strong>. Njegovi bodovi od karata idu protivniku s više ukupnih bodova (bodovi + zvanja).<br><br>Ako su protivnici <strong>izjednačeni</strong> — baca se novčić! 🪙</div>
+      </div>
+
+      <div style="background:var(--zv-light);border:1.5px solid #b8d8f0;border-radius:14px;padding:1rem;">
+        <div style="font-size:.6rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--zv);margin-bottom:.5rem;">⭐ Zvanja</div>
+        <div style="font-size:.85rem;font-weight:600;color:var(--text);line-height:1.5;margin-bottom:.5rem;">Zvanja se dodaju na bodove i utječu na prolaz/pad zvača. Vrijednosti:</div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.3rem;">
+          <div style="background:white;border-radius:8px;padding:.3rem;text-align:center;font-size:.8rem;font-weight:800;color:var(--zv);">+20</div>
+          <div style="background:white;border-radius:8px;padding:.3rem;text-align:center;font-size:.8rem;font-weight:800;color:var(--zv);">+50</div>
+          <div style="background:white;border-radius:8px;padding:.3rem;text-align:center;font-size:.8rem;font-weight:800;color:var(--zv);">+100</div>
+          <div style="background:white;border-radius:8px;padding:.3rem;text-align:center;font-size:.8rem;font-weight:800;color:var(--zv);">+150</div>
+          <div style="background:white;border-radius:8px;padding:.3rem;text-align:center;font-size:.8rem;font-weight:800;color:var(--zv);">+200</div>
+        </div>
+      </div>
+
+      <div style="background:var(--off);border-radius:14px;padding:1rem;">
+        <div style="font-size:.6rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--text-mid);margin-bottom:.5rem;">✏️ Ostale opcije</div>
+        <div style="display:flex;flex-direction:column;gap:.35rem;font-size:.85rem;font-weight:600;color:var(--text);line-height:1.4;">
+          <div><strong>↩ Poništi</strong> — briše zadnju unesenu rundu</div>
+          <div><strong>✏️ Uredi</strong> — klikni na olovku pored bilo koje runde za ispravak</div>
+          <div><strong>Ponovi igru</strong> — nova igra s istim igračima</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══ COIN FLIP ══ -->
+<div class="confirm-bg" id="coinBg">
+  <div class="confirm-box" style="max-width:320px;">
+    <div style="font-size:1.5rem;line-height:1;margin-bottom:.1rem;">🪙</div>
+    <div style="font-size:.65rem;font-weight:800;letter-spacing:.2em;color:var(--text-dim);text-transform:uppercase;">Izjednačeno!</div>
+    <p style="font-size:.82rem;color:var(--text-mid);margin-top:-.2rem;">Bacamo novčić — sreća odlučuje!</p>
+    <div id="coinWrap" style="perspective:800px;height:130px;display:flex;align-items:center;justify-content:center;margin:.4rem 0;background:radial-gradient(ellipse at center,rgba(245,200,66,.15) 0%,transparent 70%);border-radius:50%;">
+      <div id="coin" style="width:115px;height:115px;position:relative;transform-style:preserve-3d;transition:transform 1.4s cubic-bezier(.3,0,.2,1);">
+        <div id="coinFront" style="position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffe97a,#f5c842 45%,#c8920a);display:flex;align-items:center;justify-content:center;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:0 0 0 5px #e0a800,0 8px 32px rgba(200,146,10,.5),inset 0 2px 6px rgba(255,255,180,.6);flex-direction:column;gap:3px;">
+          <div style="font-size:.5rem;font-weight:900;letter-spacing:.18em;color:#7a5000;text-transform:uppercase;opacity:.8;">✦ PISMO ✦</div>
+          <div id="coinNameA" style="font-size:1rem;font-weight:900;color:#4a2e00;text-align:center;padding:0 10px;text-shadow:0 1px 2px rgba(255,220,80,.6);"></div>
+        </div>
+        <div id="coinBack" style="position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 65% 35%,#ffe97a,#f5c842 45%,#c8920a);display:flex;align-items:center;justify-content:center;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:rotateY(180deg);box-shadow:0 0 0 5px #e0a800,0 8px 32px rgba(200,146,10,.5),inset 0 2px 6px rgba(255,255,180,.6);flex-direction:column;gap:3px;">
+          <div style="font-size:.5rem;font-weight:900;letter-spacing:.18em;color:#7a5000;text-transform:uppercase;opacity:.8;">✦ GLAVA ✦</div>
+          <div id="coinNameB" style="font-size:1rem;font-weight:900;color:#4a2e00;text-align:center;padding:0 10px;text-shadow:0 1px 2px rgba(255,220,80,.6);"></div>
+        </div>
+      </div>
+    </div>
+    <div id="coinResult" style="font-size:1rem;font-weight:800;color:var(--green);min-height:1.4rem;text-align:center;"></div>
+    <div class="confirm-btns" style="margin-top:.3rem;">
+      <button class="btn-cancel" id="coinCancelBtn" onclick="closeCoinFlip()">Odustani</button>
+      <button class="btn-save" id="coinFlipBtn" onclick="doFlip()" style="flex:2;">Baci! 🪙</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ CONFIRM ══ -->
 <div class="confirm-bg" id="confirmBg">
   <div class="confirm-box">
@@ -707,6 +822,39 @@ let rounds   = [];
 let caller   = 0;
 let limit    = 1001;
 let _lim     = 1001;
+
+// ── PERSIST ──
+const SAVE_KEY = 'belablok_save';
+
+function saveState() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ players, totals, rounds, caller, limit }));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const s = localStorage.getItem(SAVE_KEY);
+    if (!s) return false;
+    const d = JSON.parse(s);
+    players = d.players; totals = d.totals; rounds = d.rounds;
+    caller = d.caller; limit = d.limit; _lim = d.limit;
+    return true;
+  } catch(e) { return false; }
+}
+
+function clearState() {
+  try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
+}
+
+// Auto-load on startup
+window.addEventListener('DOMContentLoaded', () => {
+  if (loadState() && players.some(p => p)) {
+    show('game');
+    renderBoard();
+    renderRounds();
+  }
+});
 
 // Modal state
 let mCaller   = 0;
@@ -831,18 +979,37 @@ function buildSheet(existingRound) {
   updateTotal();
 }
 
+// Track which field was auto-filled so we can recalculate it when others change
+let autoFilledIdx = -1;
+
 function buildScores() {
   const row = document.getElementById('scoreRow');
   row.innerHTML = '';
+  autoFilledIdx = -1;
   const isEdit = mEditIdx >= 0;
-  // When editing, show original raw scores (before 0-override) if stored, else show current
   const prefill = isEdit ? rounds[mEditIdx]._raw || rounds[mEditIdx].scores : [null,null,null];
   for (let i=0;i<3;i++) {
     const w = document.createElement('div');
     w.className = 'sinput-wrap' + (i===mCaller?' caller':'');
     w.id = 'sw'+i;
     const val = prefill[i] !== null ? prefill[i] : '';
-    w.innerHTML = `<div class="sinput-name">${players[i]}</div><input type="number" id="si${i}" min="0" max="162" placeholder="0" inputmode="numeric" value="${val}" oninput="onInput(${i})">`;
+    const inp = document.createElement('input');
+    inp.type = 'number'; inp.id = 'si'+i; inp.min = 0; inp.max = 162;
+    inp.placeholder = '0'; inp.inputMode = 'numeric'; inp.value = val;
+    inp.addEventListener('input', () => {
+      // If user manually edits the auto-filled field, clear that tracking
+      if (autoFilledIdx === i) autoFilledIdx = -1;
+      updateTotal();
+    });
+    inp.addEventListener('blur', () => onFieldBlur(i));
+    inp.addEventListener('keydown', (e) => {
+      // Backspace/Delete on empty field → fill this field from other two
+      if ((e.key === 'Backspace' || e.key === 'Delete') && inp.value === '') {
+        fillInto(i);
+      }
+    });
+    w.innerHTML = `<div class="sinput-name">${players[i]}</div>`;
+    w.appendChild(inp);
     row.appendChild(w);
   }
 }
@@ -851,14 +1018,50 @@ function refreshCallerStyle() {
   for (let i=0;i<3;i++) document.getElementById('sw'+i).className='sinput-wrap'+(i===mCaller?' caller':'');
 }
 
-function onInput(c) {
+function getVal(i) {
+  const x = document.getElementById('si'+i).value.trim();
+  return x === '' ? null : parseInt(x);
+}
+
+function onFieldBlur(changedIdx) {
   updateTotal();
-  const v = [0,1,2].map(i=>{ const x=document.getElementById('si'+i).value; return x===''?null:parseInt(x); });
-  if (v.filter(x=>x!==null).length===2) {
-    const m = v.findIndex(x=>x===null);
-    const s = v.filter(x=>x!==null).reduce((a,b)=>a+b,0);
-    const r = 162-s;
-    if (r>=0) { document.getElementById('si'+m).value=r; updateTotal(); }
+  const v = [0,1,2].map(i => getVal(i));
+  const emptyIdxs = [0,1,2].filter(i => v[i] === null);
+
+  // If there's a previously auto-filled field that's not the one we just edited, recalculate it
+  if (autoFilledIdx >= 0 && autoFilledIdx !== changedIdx) {
+    fillInto(autoFilledIdx);
+    return;
+  }
+
+  // One field filled, two empty → fill both others with 0 (and last gets remainder)
+  if (emptyIdxs.length === 2) {
+    emptyIdxs.forEach(i => { document.getElementById('si'+i).value = 0; });
+    autoFilledIdx = emptyIdxs[emptyIdxs.length - 1];
+    // Recalculate last one properly
+    fillInto(autoFilledIdx);
+    return;
+  }
+
+  // One empty field (not the one we just edited) → fill it
+  if (emptyIdxs.length === 1 && emptyIdxs[0] !== changedIdx) {
+    fillInto(emptyIdxs[0]);
+  }
+}
+
+function fillInto(targetIdx) {
+  // Treat empty fields as 0 for calculation
+  const v = [0,1,2].map(i => {
+    if (i === targetIdx) return null;
+    const x = document.getElementById('si'+i).value.trim();
+    return x === '' ? 0 : parseInt(x);
+  });
+  const s = v.filter(x => x !== null).reduce((a,b) => a+b, 0);
+  const r = 162 - s;
+  if (r >= 0 && r <= 162) {
+    document.getElementById('si'+targetIdx).value = r;
+    autoFilledIdx = targetIdx;
+    updateTotal();
   }
 }
 
@@ -938,14 +1141,23 @@ function saveRound() {
   const opponents = [0,1,2].filter(i => i !== mCaller);
   const oppTotals = opponents.map(i => scores[i] + zvTotals[i]);
 
-  // Caller fails if either opponent beats them, or if combined opponents >= caller
+  // Caller fails if any opponent has equal or more total (bodovi+zvanja), or caller didn't reach 82
   const callerFails = oppTotals.some(t => t >= callerTotal) || callerTotal <= 81;
 
   if (callerFails) {
-    // Find which opponent has more points (bodovi only, zvanja stay separate)
     const [oppA, oppB] = opponents;
-    const winner = (scores[oppA] + zvTotals[oppA]) >= (scores[oppB] + zvTotals[oppB]) ? oppA : oppB;
-    scores[winner] += scores[mCaller]; // caller's raw points go to winning opponent
+    const totalA = scores[oppA] + zvTotals[oppA];
+    const totalB = scores[oppB] + zvTotals[oppB];
+    if (totalA === totalB) {
+      // Tie! Store pending round and show coin flip
+      pendingRound = { raw, scores, zv, mCaller, mEditIdx: mEditIdx };
+      pendingOppA = oppA; pendingOppB = oppB;
+      closeSheet();
+      openCoinFlip(oppA, oppB);
+      return;
+    }
+    const winner = totalA > totalB ? oppA : oppB;
+    scores[winner] += scores[mCaller];
     scores[mCaller] = 0;
   }
 
@@ -966,6 +1178,7 @@ function saveRound() {
   closeSheet();
   renderBoard();
   renderRounds();
+  saveState();
   checkWinner();
 }
 
@@ -976,6 +1189,7 @@ function undoLast() {
   for (let i=0;i<3;i++) totals[i] -= last.scores[i] + (last.zv[i]||[]).reduce((a,b)=>a+b,0);
   caller = (caller+2)%3;
   renderBoard(); renderRounds();
+  saveState();
 }
 
 // ── WINNER ──
@@ -983,6 +1197,8 @@ function checkWinner() {
   const max = Math.max(...totals);
   if (max < limit) return;
   const wi = totals.indexOf(max);
+  recordWin(players[wi], players, totals);
+  clearState();
   document.getElementById('winName').textContent = players[wi];
   document.getElementById('winScore').textContent = totals[wi];
   const sorted = [0,1,2].sort((a,b)=>totals[b]-totals[a]);
@@ -996,8 +1212,155 @@ function checkWinner() {
 // ── RESET ──
 function askReset() { document.getElementById('confirmBg').classList.add('open'); }
 function closeConfirm() { document.getElementById('confirmBg').classList.remove('open'); }
+// ── COIN FLIP ──
+let pendingRound = null;
+let pendingOppA = -1, pendingOppB = -1;
+let coinFlipDone = false;
+
+// ── LEADERBOARD ──
+const LB_KEY = 'belablok_leaderboard';
+
+function getLb() {
+  try { return JSON.parse(localStorage.getItem(LB_KEY)) || {}; } catch(e) { return {}; }
+}
+
+function saveLb(lb) {
+  try { localStorage.setItem(LB_KEY, JSON.stringify(lb)); } catch(e) {}
+}
+
+function recordWin(winnerName, allPlayers, allTotals) {
+  const lb = getLb();
+  // Record win for winner
+  if (!lb[winnerName]) lb[winnerName] = { wins:0, games:0, totalPts:0 };
+  lb[winnerName].wins++;
+  // Record game for all players
+  allPlayers.forEach((name, i) => {
+    if (!lb[name]) lb[name] = { wins:0, games:0, totalPts:0 };
+    lb[name].games++;
+    lb[name].totalPts += allTotals[i];
+  });
+  saveLb(lb);
+}
+
+function openLeaderboard() {
+  const lb = getLb();
+  const lbContent = document.getElementById('lbContent');
+  const entries = Object.entries(lb).sort((a,b) => b[1].wins - a[1].wins || b[1].totalPts - a[1].totalPts);
+
+  if (!entries.length) {
+    lbContent.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-dim);font-size:.9rem;font-weight:600;">Još nema rezultata.<br>Odigraj prvu igru! 🃏</div>';
+  } else {
+    let h = '<div class="lb-head"><div></div><div></div><div class="lb-head-lbl">Pobjede</div><div class="lb-head-lbl">Igre</div><div class="lb-head-lbl">Ukupno</div></div>';
+    entries.forEach(([name, s], i) => {
+      const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+      const rank = medal || `<span style="font-size:.75rem;font-weight:700;color:var(--text-dim);">${i+1}</span>`;
+      h += `<div class="lb-row${i===0?' lb-first':''}">
+        <div class="lb-rank">${rank}</div>
+        <div class="lb-name">${name}</div>
+        <div class="lb-stat"><div class="lb-stat-val">${s.wins}</div></div>
+        <div class="lb-stat"><div class="lb-stat-val" style="color:var(--text-mid);">${s.games}</div></div>
+        <div class="lb-stat"><div class="lb-stat-val" style="color:var(--zv);font-size:.82rem;">${s.totalPts}</div></div>
+      </div>`;
+    });
+    lbContent.innerHTML = h;
+  }
+  document.getElementById('lbBg').classList.add('open');
+}
+
+function closeLb(e) {
+  if (!e || e.target === document.getElementById('lbBg')) document.getElementById('lbBg').classList.remove('open');
+}
+
+function confirmClearLb() {
+  if (confirm('Obrisati sve rezultate s ljestvice?')) {
+    localStorage.removeItem(LB_KEY);
+    openLeaderboard();
+  }
+}
+
+function openHelp() { document.getElementById('helpBg').classList.add('open'); }
+function closeHelp(e) {
+  if (!e || e.target === document.getElementById('helpBg')) {
+    document.getElementById('helpBg').classList.remove('open');
+  }
+}
+
+function openCoinFlip(oppA, oppB) {
+  coinFlipDone = false;
+  document.getElementById('coinNameA').textContent = players[oppA];
+  document.getElementById('coinNameB').textContent = players[oppB];
+  document.getElementById('coin').style.transform = 'rotateY(0deg)';
+  document.getElementById('coinResult').textContent = '';
+  document.getElementById('coinFlipBtn').disabled = false;
+  document.getElementById('coinFlipBtn').textContent = 'Baci! 🪙';
+  document.getElementById('coinCancelBtn').style.display = '';
+  document.getElementById('coinBg').classList.add('open');
+}
+
+function closeCoinFlip() {
+  document.getElementById('coinBg').classList.remove('open');
+  pendingRound = null;
+}
+
+function doFlip() {
+  if (coinFlipDone) { finishCoinFlip(); return; }
+  const btn = document.getElementById('coinFlipBtn');
+  btn.disabled = true;
+  document.getElementById('coinCancelBtn').style.display = 'none';
+  document.getElementById('coinResult').textContent = '';
+
+  const headsWins = Math.random() < 0.5; // heads = coinBack = oppB
+  const winner = headsWins ? pendingOppB : pendingOppA;
+
+  // Spin: multiple full rotations + land on winner side
+  const spins = 6 + Math.floor(Math.random() * 4);
+  const landAngle = headsWins ? 180 : 0;
+  const finalAngle = spins * 360 + landAngle;
+  document.getElementById('coin').style.transform = `rotateY(${finalAngle}deg)`;
+
+  setTimeout(() => {
+    document.getElementById('coinResult').textContent = `🏆 ${players[winner]} dobiva bodove!`;
+    btn.textContent = 'Potvrdi';
+    btn.disabled = false;
+    coinFlipDone = true;
+    // Store winner in pendingRound
+    pendingRound._coinWinner = winner;
+  }, 1300);
+}
+
+function finishCoinFlip() {
+  const { raw, scores, zv, mCaller: mc, mEditIdx: mei, _coinWinner: winner } = pendingRound;
+  scores[winner] += scores[mc];
+  scores[mc] = 0;
+  document.getElementById('coinBg').classList.remove('open');
+
+  if (mei >= 0) {
+    const old = rounds[mei];
+    for (let i=0;i<3;i++) totals[i] -= old.scores[i] + (old.zv[i]||[]).reduce((a,b)=>a+b,0);
+    rounds[mei] = {ci: mc, scores, zv, _raw:[...raw]};
+    for (let i=0;i<3;i++) totals[i] += scores[i] + zv[i].reduce((a,b)=>a+b,0);
+  } else {
+    rounds.push({ci: mc, scores, zv, _raw:[...raw]});
+    for (let i=0;i<3;i++) totals[i] += scores[i] + zv[i].reduce((a,b)=>a+b,0);
+    caller = (caller+1)%3;
+  }
+  pendingRound = null;
+  renderBoard(); renderRounds();
+  saveState();
+  checkWinner();
+}
+
+function rematch() {
+  totals = [0,0,0]; rounds = []; caller = 0;
+  show('game');
+  renderBoard();
+  renderRounds();
+}
+
 function hardReset() {
   closeConfirm();
+  clearState();
+  players = ['','','']; totals = [0,0,0]; rounds = []; caller = 0;
   ['p1','p2','p3'].forEach(id=>document.getElementById(id).value='');
   show('setup');
 }
