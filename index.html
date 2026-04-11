@@ -533,15 +533,6 @@ input::placeholder { color: var(--text-dim); font-weight: 500; }
 
 /* ═══ CONFIRM ═══ */
 #coin [style*="backface-visibility"] { -webkit-backface-visibility: hidden; }
-.lb-row { display:grid; grid-template-columns:2rem 1fr repeat(3,auto); gap:.4rem .6rem; align-items:center; padding:.6rem .75rem; border-radius:11px; margin-bottom:.3rem; background:var(--off); }
-.lb-row.lb-first { background:linear-gradient(135deg,#fff8e0,#fff3c0); border:1.5px solid #f5c842; }
-.lb-rank { font-size:.9rem; text-align:center; }
-.lb-name { font-size:.92rem; font-weight:800; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.lb-stat { text-align:center; }
-.lb-stat-val { font-size:.95rem; font-weight:900; color:var(--green); }
-.lb-stat-lbl { font-size:.55rem; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:.08em; }
-.lb-head { display:grid; grid-template-columns:2rem 1fr repeat(3,auto); gap:.4rem .6rem; padding:.2rem .75rem .4rem; }
-.lb-head-lbl { font-size:.55rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--text-dim); text-align:center; }
 
 .confirm-bg {
   display: none; position: fixed; inset: 0;
@@ -607,7 +598,6 @@ input::placeholder { color: var(--text-dim); font-weight: 500; }
     <div class="top-bar-logo">Bela<span>Blok</span></div>
     <div class="top-actions">
       <button class="btn-sm" onclick="undoLast()">↩ Poništi</button>
-      <button class="btn-sm" onclick="openLeaderboard()" style="font-weight:900;padding:.38rem .55rem;">🏆</button>
       <button class="btn-sm" onclick="openHelp()" style="font-weight:900;padding:.38rem .6rem;">?</button>
       <button class="btn-sm" onclick="askReset()">Nova igra</button>
     </div>
@@ -700,19 +690,6 @@ input::placeholder { color: var(--text-dim); font-weight: 500; }
       <button class="btn-cancel" onclick="closeSheet()">Odustani</button>
       <button class="btn-save" onclick="saveRound()"><span id="saveBtnLabel">Spremi rundu</span></button>
     </div>
-  </div>
-</div>
-
-<!-- ══ LEADERBOARD ══ -->
-<div class="confirm-bg" id="lbBg" onclick="closeLb(event)">
-  <div style="background:var(--white);border-radius:22px 22px 0 0;width:100%;max-width:500px;padding:1.25rem 1.25rem 2.5rem;display:flex;flex-direction:column;gap:1rem;max-height:88dvh;overflow-y:auto;animation:up .2s ease;">
-    <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto -.2rem;"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;">
-      <div style="font-size:1.3rem;font-weight:900;">Ljestvica 🏆</div>
-      <button onclick="closeLb()" style="background:var(--off);border:1.5px solid var(--border);border-radius:8px;width:2rem;height:2rem;font-size:1rem;cursor:pointer;color:var(--text-mid);display:flex;align-items:center;justify-content:center;">✕</button>
-    </div>
-    <div id="lbContent"></div>
-    <button onclick="confirmClearLb()" style="background:none;border:none;color:var(--text-dim);font-family:'Nunito',sans-serif;font-size:.75rem;font-weight:700;cursor:pointer;text-decoration:underline;text-align:center;margin-top:-.3rem;">Obriši sve rezultate</button>
   </div>
 </div>
 
@@ -822,39 +799,6 @@ let rounds   = [];
 let caller   = 0;
 let limit    = 1001;
 let _lim     = 1001;
-
-// ── PERSIST ──
-const SAVE_KEY = 'belablok_save';
-
-function saveState() {
-  try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify({ players, totals, rounds, caller, limit }));
-  } catch(e) {}
-}
-
-function loadState() {
-  try {
-    const s = localStorage.getItem(SAVE_KEY);
-    if (!s) return false;
-    const d = JSON.parse(s);
-    players = d.players; totals = d.totals; rounds = d.rounds;
-    caller = d.caller; limit = d.limit; _lim = d.limit;
-    return true;
-  } catch(e) { return false; }
-}
-
-function clearState() {
-  try { localStorage.removeItem(SAVE_KEY); } catch(e) {}
-}
-
-// Auto-load on startup
-window.addEventListener('DOMContentLoaded', () => {
-  if (loadState() && players.some(p => p)) {
-    show('game');
-    renderBoard();
-    renderRounds();
-  }
-});
 
 // Modal state
 let mCaller   = 0;
@@ -1178,7 +1122,6 @@ function saveRound() {
   closeSheet();
   renderBoard();
   renderRounds();
-  saveState();
   checkWinner();
 }
 
@@ -1189,7 +1132,6 @@ function undoLast() {
   for (let i=0;i<3;i++) totals[i] -= last.scores[i] + (last.zv[i]||[]).reduce((a,b)=>a+b,0);
   caller = (caller+2)%3;
   renderBoard(); renderRounds();
-  saveState();
 }
 
 // ── WINNER ──
@@ -1197,8 +1139,6 @@ function checkWinner() {
   const max = Math.max(...totals);
   if (max < limit) return;
   const wi = totals.indexOf(max);
-  recordWin(players[wi], players, totals);
-  clearState();
   document.getElementById('winName').textContent = players[wi];
   document.getElementById('winScore').textContent = totals[wi];
   const sorted = [0,1,2].sort((a,b)=>totals[b]-totals[a]);
@@ -1216,67 +1156,6 @@ function closeConfirm() { document.getElementById('confirmBg').classList.remove(
 let pendingRound = null;
 let pendingOppA = -1, pendingOppB = -1;
 let coinFlipDone = false;
-
-// ── LEADERBOARD ──
-const LB_KEY = 'belablok_leaderboard';
-
-function getLb() {
-  try { return JSON.parse(localStorage.getItem(LB_KEY)) || {}; } catch(e) { return {}; }
-}
-
-function saveLb(lb) {
-  try { localStorage.setItem(LB_KEY, JSON.stringify(lb)); } catch(e) {}
-}
-
-function recordWin(winnerName, allPlayers, allTotals) {
-  const lb = getLb();
-  // Record win for winner
-  if (!lb[winnerName]) lb[winnerName] = { wins:0, games:0, totalPts:0 };
-  lb[winnerName].wins++;
-  // Record game for all players
-  allPlayers.forEach((name, i) => {
-    if (!lb[name]) lb[name] = { wins:0, games:0, totalPts:0 };
-    lb[name].games++;
-    lb[name].totalPts += allTotals[i];
-  });
-  saveLb(lb);
-}
-
-function openLeaderboard() {
-  const lb = getLb();
-  const lbContent = document.getElementById('lbContent');
-  const entries = Object.entries(lb).sort((a,b) => b[1].wins - a[1].wins || b[1].totalPts - a[1].totalPts);
-
-  if (!entries.length) {
-    lbContent.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-dim);font-size:.9rem;font-weight:600;">Još nema rezultata.<br>Odigraj prvu igru! 🃏</div>';
-  } else {
-    let h = '<div class="lb-head"><div></div><div></div><div class="lb-head-lbl">Pobjede</div><div class="lb-head-lbl">Igre</div><div class="lb-head-lbl">Ukupno</div></div>';
-    entries.forEach(([name, s], i) => {
-      const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
-      const rank = medal || `<span style="font-size:.75rem;font-weight:700;color:var(--text-dim);">${i+1}</span>`;
-      h += `<div class="lb-row${i===0?' lb-first':''}">
-        <div class="lb-rank">${rank}</div>
-        <div class="lb-name">${name}</div>
-        <div class="lb-stat"><div class="lb-stat-val">${s.wins}</div></div>
-        <div class="lb-stat"><div class="lb-stat-val" style="color:var(--text-mid);">${s.games}</div></div>
-        <div class="lb-stat"><div class="lb-stat-val" style="color:var(--zv);font-size:.82rem;">${s.totalPts}</div></div>
-      </div>`;
-    });
-    lbContent.innerHTML = h;
-  }
-  document.getElementById('lbBg').classList.add('open');
-}
-
-function closeLb(e) {
-  if (!e || e.target === document.getElementById('lbBg')) document.getElementById('lbBg').classList.remove('open');
-}
-
-function confirmClearLb() {
-  if (confirm('Obrisati sve rezultate s ljestvice?')) {
-    localStorage.removeItem(LB_KEY);
-    openLeaderboard();
-  }
-}
 
 function openHelp() { document.getElementById('helpBg').classList.add('open'); }
 function closeHelp(e) {
@@ -1345,9 +1224,7 @@ function finishCoinFlip() {
     caller = (caller+1)%3;
   }
   pendingRound = null;
-  renderBoard(); renderRounds();
-  saveState();
-  checkWinner();
+  renderBoard(); renderRounds(); checkWinner();
 }
 
 function rematch() {
@@ -1359,8 +1236,6 @@ function rematch() {
 
 function hardReset() {
   closeConfirm();
-  clearState();
-  players = ['','','']; totals = [0,0,0]; rounds = []; caller = 0;
   ['p1','p2','p3'].forEach(id=>document.getElementById(id).value='');
   show('setup');
 }
