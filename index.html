@@ -972,23 +972,22 @@ function onFieldBlur(changedIdx) {
   const v = [0,1,2].map(i => getVal(i));
   const emptyIdxs = [0,1,2].filter(i => v[i] === null);
 
-  // If there's a previously auto-filled field that's not the one we just edited, recalculate it
-  if (autoFilledIdx >= 0 && autoFilledIdx !== changedIdx) {
-    fillInto(autoFilledIdx);
+  // If caller was auto-filled and we changed another field → recalculate caller
+  if (autoFilledIdx === mCaller && autoFilledIdx !== changedIdx) {
+    fillInto(mCaller);
     return;
   }
 
-  // One field filled, two empty → fill both others with 0 (and last gets remainder)
-  if (emptyIdxs.length === 2) {
-    emptyIdxs.forEach(i => { document.getElementById('si'+i).value = 0; });
-    autoFilledIdx = emptyIdxs[emptyIdxs.length - 1];
-    // Recalculate last one properly
-    fillInto(autoFilledIdx);
+  // Both non-callers filled → auto-fill caller
+  const opponents = [0,1,2].filter(i => i !== mCaller);
+  const opponentsFilled = opponents.every(i => v[i] !== null);
+  if (opponentsFilled && v[mCaller] === null) {
+    fillInto(mCaller);
     return;
   }
 
-  // One empty field (not the one we just edited) → fill it
-  if (emptyIdxs.length === 1 && emptyIdxs[0] !== changedIdx) {
+  // Caller is filled but one opponent is empty → fill that opponent
+  if (emptyIdxs.length === 1 && emptyIdxs[0] !== mCaller && emptyIdxs[0] !== changedIdx) {
     fillInto(emptyIdxs[0]);
   }
 }
